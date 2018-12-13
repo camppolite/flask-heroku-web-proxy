@@ -5,27 +5,51 @@ For example:
 http://localhost:8080/p/www.google.com
 """
 import os
-from flask import Flask, render_template, request, abort, Response, redirect
+from flask import Flask, render_template, request, abort, Response, redirect,make_response, stream_with_context
 from werkzeug.serving import WSGIRequestHandler
 import requests
 import logging
+from contextlib import closing
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger("main.py")
 
 
-@app.route('/<path:url>')
-def root(url):
-    LOG.info("Root route, path: %s", url)
-    # If referred from a proxy request, then redirect to a URL with the proxy prefix.
-    # This allows server-relative and protocol-relative URLs to work.
-    proxy_ref = proxy_ref_info(request)
-    if proxy_ref:
-        redirect_url = "%s/%s%s" % (proxy_ref[0], url, ("?" + request.query_string if request.query_string else ""))
-        LOG.info("Redirecting referred URL to: %s", redirect_url)
-        return proxy(redirect_url)
-    abort(404)
+# @app.route('/<path:url>')
+# def root(url):
+#     LOG.info("Root route, path: %s", url)
+#     # If referred from a proxy request, then redirect to a URL with the proxy prefix.
+#     # This allows server-relative and protocol-relative URLs to work.
+#     proxy_ref = proxy_ref_info(request)
+#     if proxy_ref:
+#         redirect_url = "%s/%s%s" % (proxy_ref[0], url, ("?" + request.query_string if request.query_string else ""))
+#         LOG.info("Redirecting referred URL to: %s", redirect_url)
+#         return proxy(redirect_url)
+#     abort(404)
+
+
+# @app.before_request
+# def before_request():
+#     url = request.url
+#     method = request.method
+#     data = request.data or request.form or None
+#     headers = dict()
+#     for name, value in request.headers:
+#         if not value or name == 'Cache-Control':
+#             continue
+#         headers[name] = value
+#
+#     with closing(
+#         requests.request(method, url, headers=headers, data=data, stream=True)
+#     ) as r:
+#         resp_headers = []
+#         for name, value in r.headers.items():
+#             if name.lower() in ('content-length', 'connection',
+#                                 'content-encoding'):
+#                 continue
+#             resp_headers.append((name, value))
+#         return Response(r, status=r.status_code, headers=resp_headers)
 
 
 @app.route('/p/<path:url>')
@@ -33,18 +57,24 @@ def proxy(url):
     """Fetches the specified URL and streams it out to the client.
     If the request was referred by the proxy itself (e.g. this is an image fetch for
     a previously proxied HTML page), then the original Referer is passed."""
-    r = get_source_rsp(url)
+    # r = get_source_rsp(url)
+    # url = url.lstrip('\\')
+    r = requests.get(url)
     LOG.info("Got %s response from %s",r.status_code, url)
     headers = dict(r.headers)
-    if headers.has_key('transfer-encoding'):
-        del(headers['transfer-encoding'])
-    if headers.has_key('content-encoding'):
-        del(headers['content-encoding'])
-    return Response(r.content, headers = headers)
+    # if headers.has_key('transfer-encoding'):
+    #     del(headers['transfer-encoding'])
+    # if headers.has_key('content-encoding'):
+    #     del(headers['content-encoding'])
+    req = requests.get(url, stream=True)
+    return Response(stream_with_context(req.iter_content()), content_type=req.headers['content-type'])
+    # return before_request
+    # return make_response(request)
+    # return Response(r, r.status_code, headers)
 
 
 def get_source_rsp(url):
-        url = 'http://%s' % url
+        # url = 'http://%s' % url
         LOG.info("Fetching %s", url)
         # Pass original Referer for subsequent resource requests
         proxy_ref = proxy_ref_info(request)
@@ -91,5 +121,5 @@ def index():
 if __name__ == '__main__':
     # Bind to PORT if defined, otherwise default to 5000.
     port = int(os.environ.get('PORT', 5000))
-    WSGIRequestHandler.protocol_version = "HTTP/1.1"
-    app.run(host='0.0.0.0', port=port)
+    # WSGIRequestHandler.protocol_version = "HTTP/1.1"
+    app.run(debug=True, host='0.0.0.0', port=port)
