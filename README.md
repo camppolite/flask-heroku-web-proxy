@@ -1,0 +1,2 @@
+GFW已经开始干扰 herokuapp.com的SSL, 导致有时网络不稳定
+本工程是用Flask实现
