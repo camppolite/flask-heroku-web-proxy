@@ -1,1 +1,1 @@
-web: gunicorn nogfw/run:app --log-file -
+web: gunicorn nogfw.run:app --log-file -
