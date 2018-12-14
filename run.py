@@ -5,6 +5,7 @@ For example:
 http://localhost:8080/p/www.google.com
 """
 import os
+import re
 from flask import Flask, render_template, request, abort, Response, redirect,make_response, stream_with_context
 from werkzeug.serving import WSGIRequestHandler
 import requests
@@ -52,20 +53,22 @@ LOG = logging.getLogger("main.py")
 #         return Response(r, status=r.status_code, headers=resp_headers)
 
 
-@app.route('/p/<path:url>')
+@app.route('/proxy/<path:url>')
 def proxy(url):
     """Fetches the specified URL and streams it out to the client.
     If the request was referred by the proxy itself (e.g. this is an image fetch for
     a previously proxied HTML page), then the original Referer is passed."""
     # r = get_source_rsp(url)
     # url = url.lstrip('\\')
-    r = requests.get(url)
-    LOG.info("Got %s response from %s",r.status_code, url)
-    headers = dict(r.headers)
+    # r = requests.get(url)
+    # LOG.info("Got %s response from %s",r.status_code, url)
+    # headers = dict(r.headers)
     # if headers.has_key('transfer-encoding'):
     #     del(headers['transfer-encoding'])
     # if headers.has_key('content-encoding'):
     #     del(headers['content-encoding'])
+    url = re.sub('/proxy/', "", request.full_path)
+    print(url)
     req = requests.get(url, stream=True)
     return Response(stream_with_context(req.iter_content()), content_type=req.headers['content-type'])
     # return before_request
@@ -120,6 +123,6 @@ def index():
 
 if __name__ == '__main__':
     # Bind to PORT if defined, otherwise default to 5000.
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 51216))
     # WSGIRequestHandler.protocol_version = "HTTP/1.1"
     app.run(debug=True, host='0.0.0.0', port=port)
