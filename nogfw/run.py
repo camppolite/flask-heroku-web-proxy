@@ -3,20 +3,15 @@
 # from boto.s3.connection import S3Connection
 # s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
 from flask import (
-    Flask, render_template, request, abort, Response, redirect,make_response, stream_with_context, url_for
+    Flask, render_template, request, abort, Response, redirect, stream_with_context, url_for
 )
 import requests
-import logging
-import re
 
 app = Flask(__name__)
 
 # Default Configuration
 DEBUG_FLAG = True
-LISTEN_PORT = 51216
-
-logging.basicConfig(level=logging.INFO)
-LOG = logging.getLogger("main.py")
+LISTEN_PORT = 33321
 
 
 @app.route('/proxy/<path:url>', methods=["GET", "POST", "PUT", "DELETE"])
@@ -27,11 +22,11 @@ def proxy(url):
     print("访问网址：" + url)
     try:
         req = requests.get(url, stream=True)
-        print("访问状态：%s" % req.status_code)
     except requests.exceptions.ConnectionError as e:
         print(str(e))
         abort(404)
     else:
+        print("访问状态：%s" % req.status_code)
         return Response(stream_with_context(req.iter_content()), content_type=req.headers['content-type'])
 
 
@@ -42,7 +37,6 @@ def no_js():
         url = request.form["url"]
         if not url:
             return render_template('index.html')
-        print(url)
         return redirect(url_for('proxy', url=url))
 
     return redirect(url_for('index'))
