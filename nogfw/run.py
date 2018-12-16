@@ -1,10 +1,7 @@
-"""
-A simple proxy server. Usage:
-http://hostname:port/p/(URL to be proxied, minus protocol)
-For example:
-http://localhost:8080/p/www.google.com
-"""
+#!/usr/bin/env python
 
+# from boto.s3.connection import S3Connection
+# s3 = S3Connection(os.environ['S3_KEY'], os.environ['S3_SECRET'])
 from flask import (
     Flask, render_template, request, abort, Response, redirect,make_response, stream_with_context, url_for
 )
@@ -27,9 +24,15 @@ def proxy(url):
     """根据输入的url，通过服务器获取url再返回给客户端"""
     if not url:
         return render_template('index.html')
-    print(url)
-    req = requests.get(url, stream=True)
-    return Response(stream_with_context(req.iter_content()), content_type=req.headers['content-type'])
+    print("访问网址：" + url)
+    try:
+        req = requests.get(url, stream=True)
+        print("访问状态：%s" % req.status_code)
+    except requests.exceptions.ConnectionError as e:
+        print(str(e))
+        abort(404)
+    else:
+        return Response(stream_with_context(req.iter_content()), content_type=req.headers['content-type'])
 
 
 @app.route('/no_js', methods=["GET", "POST"])

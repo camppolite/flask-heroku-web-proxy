@@ -69,13 +69,13 @@
       <form action="{{ url_for('no_js') }}" method="post" id="unblocker-form">
         <p>
           网址:
-          <input type="text" id="url" name="url" autofocus="autofocus" value="https://www.google.com/search">
+          <input type="text" id="url" name="url" autofocus="autofocus" value="https://www.google.com/">
           <input type="submit" value="浏览">
         </p>
       </form>
       <h3><center>禁网导航</center></h3>
 	  <h4>实用工具</h4>
-		<a href="{{ url_for('proxy', url='https://www.google.com/search') }}" target="_blank">Google搜索</a>
+		<a href="{{ url_for('proxy', url='https://www.google.com/') }}" target="_blank">Google搜索</a>
 		<a href="{{ url_for('proxy', url='https://zh.wikipedia.org/wiki') }}" target="_blank">维基百科</a>
 		<a href="https://github.com/gfw-breaker" target="_blank">GitHub</a>
 		<a href="{{ url_for('proxy', url='http://truth.atspace.eu/fgate') }}" target="_blank">翻墙软件</a>
