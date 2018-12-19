@@ -44,6 +44,26 @@ def no_js():
 
 @app.route('/')
 def index():
+    import os
+    try:
+        from boto.s3.connection import S3Connection
+    except ImportError:
+        import configparser
+        config = configparser.ConfigParser()
+        config.read("../config/database.conf")
+        mysql = config["MySQL"]
+        host = mysql["host"]
+        port = mysql["port"]
+        user = mysql["user"]
+        password = mysql["password"]
+        db = mysql["db"]
+    else:
+        from urllib.parse import urlparse
+        if 'DATABASE_URL' in os.environ:
+            url = urlparse(os.environ['DATABASE_URL'])
+            print(url)
+        s3 = S3Connection(os.environ['DATABASE_URL'], os.environ['DATABASE_URL'])
+        print(s3)
     return render_template('index.html')
 
 
